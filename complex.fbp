@@ -1,0 +1,3 @@
+"Hello -> \"-> \' world" -> IN Foo(Component), 'World' -> IN Bar(OtherComponent),   Foo OUT -> DATA Bar
+# A comment
+Read() OUT -> IN Display()
