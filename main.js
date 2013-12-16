@@ -1,5 +1,5 @@
 var fs = require('fs');
-var fbpData = fs.readFileSync('./parseme.fbp').toString('utf-8');
+var fbpData = fs.readFileSync('./complex.fbp').toString('utf-8');
 var Parser = require('./lib/parser');
 
 var parser = new Parser();

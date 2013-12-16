@@ -1,2 +1,6 @@
+EXPORT=Read.IN:FILENAME
 # A comment
-Read() OUT -> IN Display()
+Read(fs/ReadFile) OUT -> IN Display()
+BlaProcess() OUT -> my_inport FancyProcess()
+OK OUT -> recogIn Niced
+WA(SomeComponent) YA -> di LI(), Read() out -> in put()
