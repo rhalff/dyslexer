@@ -1,0 +1,15 @@
+# crashes
+PROCESS PORT
+
+# think it's good this is not crashing.
+# although it should throw an error when
+# we go to the new line.
+# sooo, but left hand side is finished.
+# anyway noflo's parser also cannot handle this.
+# then comes right hand side.
+# if that's a whole, then it's correct.
+# as far as left hand side is concerned it is correct.
+# Basically left hand almost always needs right hand.
+# however with the piping it keeps staying on
+# the right hand, only similarity is that it returns
+# to the root first each time.

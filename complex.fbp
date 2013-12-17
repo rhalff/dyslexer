@@ -4,6 +4,9 @@ Read() OUT -> IN Display()
 
 '8003' -> LISTEN WebServer(HTTP/Server) REQUEST -> IN Profiler(HTTP/Profiler) OUT -> IN Authentication(HTTP/BasicAuth)
 
-Authentication() OUT -> IN GreetUser(HelloController) OUT -> IN WriteResponse(HTTP/WriteResponse) OUT -> IN Send(HTTP/SendResponse)
+Authentication() OUT -> IN GreetUser(HelloController) OUT -> IN WriteResponse(HTTP/WriteResponse) OUT -> IN Send(HTTP/SendResponse) # please note this is a comment
 
-'hello.jade' -> SOURCE ReadTemplate(ReadFile) OUT -> TEMPLATE Render(Template)\nGreetUser() DATA -> OPTIONS Render() OUT -> STRING WriteResponse()
+EXPORTTOOPERMISSIVETHISISRECOGNIZEDASDATAHOWTOMAKEAPARSERNONPERMISSIVEBYDEFAULTCANBESOLVEDBYMINIMUMRESTRICTION
+
+'hello.jade' -> SOURCE ReadTemplate(ReadFile) OUT -> TEMPLATE Render(Template)
+GreetUser() DATA -> OPTIONS Render() OUT -> STRING WriteResponse()
