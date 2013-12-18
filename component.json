@@ -2,10 +2,9 @@
   "name": "dyslexer",
   "description": ".fbp Parser for Chiχ",
   "version": "0.0.2",
-  "paths": ["lib"],
   "scripts": [
-    "dyslexer.js",
-    "scope.js"
+    "lib/dyslexer.js",
+    "lib/scope.js"
   ],
   "main": "dyslexer.js"
 }
