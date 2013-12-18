@@ -1,3 +1,5 @@
+EXPORT=Read.in:FILENAME
+
 "Hello -> \"->      OK THIS IS BROKE  \' world" -> IN Foo(Component), 'World' -> IN Bar(OtherComponent),   Foo OUT -> DATA Bar
 # A comment
 Read() OUT -> IN Display()
@@ -6,8 +8,7 @@ Read() OUT -> IN Display()
 
 Authentication() OUT -> IN GreetUser(HelloController) OUT -> IN WriteResponse(HTTP/WriteResponse) OUT -> IN Send(HTTP/SendResponse) # please note this is a comment
 
-'hello.jade' -> SOURCE ReadTemplate(ReadFile) OUT -> TEMPLATE Render(Template)
-GreetUser() DATA -> OPTIONS Render() OUT -> STRING WriteResponse()
-
 # EXPORTTOOPERMISSIVETHISISRECOGNIZEDASDATAHOWTOMAKEAPARSERNONPERMISSIVEBYDEFAULTCANBESOLVEDBYMINIMUMRESTRICTION
 
+'hello.jade' -> SOURCE ReadTemplate(ReadFile) OUT -> TEMPLATE Render(Template)
+GreetUser() DATA -> OPTIONS Render() OUT -> STRING WriteResponse()
