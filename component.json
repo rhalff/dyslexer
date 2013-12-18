@@ -5,7 +5,7 @@
   "paths": ["lib"],
   "scripts": [
     "dyslexer.js",
-    "scope.js",
+    "scope.js"
   ],
   "main": "dyslexer.js"
 }
