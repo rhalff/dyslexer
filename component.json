@@ -6,5 +6,9 @@
     "lib/dyslexer.js",
     "lib/scope.js"
   ],
+  "dependencies": {
+    "inherit-component": "*",
+    "juliangruber/events": "*"
+  },
   "main": "dyslexer.js"
 }
