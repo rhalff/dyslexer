@@ -29,12 +29,11 @@ module.exports = function(grunt) {
     }
   });
   grunt.loadNpmTasks('grunt-shell');
-  grunt.loadNpmTasks('grunt-reload-chrome');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.registerTask('build', ['jshint', 'shell:build', 'uglify']);
+  grunt.registerTask('build', ['jshint', 'shell:build']);
   grunt.registerTask('test', ['build', 'mocha_phantomjs']);
   grunt.registerTask('default', ['build']);
 };
