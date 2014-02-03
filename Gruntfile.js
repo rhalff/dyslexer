@@ -29,6 +29,7 @@ module.exports = function(grunt) {
     }
   });
   grunt.loadNpmTasks('grunt-shell');
+  grunt.loadNpmTasks('grunt-release');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
