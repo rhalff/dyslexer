@@ -1,0 +1,10 @@
+{
+  "name": "dyslexer",
+  "description": "Dyslexer",
+  "version": "0.1.4",
+  "scripts": [
+    "lib/dyslexer.js",
+    "lib/scope.js"
+  ],
+  "main": "lib/dyslexer.js"
+}
