@@ -373,7 +373,7 @@ DysLexer.prototype.next = function() {
   // that's the code following below.
 
   // it the scope has set it's own tokenEndings..
-  if(this.level[this.scope].tokenEnding.length) {
+  if(this.level[this.scope].tokenEnding !== undefined) {
 
     if(!this.tokenStart) this.tokenStart = this.current;
     this.token += c;
@@ -407,7 +407,7 @@ DysLexer.prototype.next = function() {
 
   } else if(
      // don't act if the scope took control
-     this.level[this.scope].tokenEnding.length === 0 &&
+     this.level[this.scope].tokenEnding === undefined &&
      this.tokenEnding.indexOf(c) >= 0) {
 
     this.fireToken();
@@ -418,7 +418,7 @@ DysLexer.prototype.next = function() {
   if(
     // note, much responsibility for the scope.
     // should take care of it's own ending.
-    !this.level[this.scope].tokenEnding.length &&
+    this.level[this.scope].tokenEnding === undefined &&
     this.eol.indexOf(c) >= 0) {
 
     // fire last token
@@ -485,7 +485,7 @@ DysLexer.prototype.fireToken = function() {
 
     // If the scope has set it's own token ending
     // do not run the rootScope 'scanner' if that's the case
-    if(this.level[realScope].tokenEnding.length ||
+    if(this.level[realScope].tokenEnding !== undefined ||
        // runs only if the above didn't match, which is important.
        !this.level[this.rootScope].onToken(this.token)) {
 
@@ -693,13 +693,16 @@ function Scope(lexer) {
 
   // default token endings
   // a scope can overwrite this.
-  this.tokenEnding = [];
+  //this.tokenEnding = [];
+  // [] now means the scope doesn't have any token endings.
+  // it will handle it by itself.
+  this.tokenEnding = undefined;
 
   // If this is set, the parser will throw an error
   // if there are more tokens, within the current scope.
   this.tokensExpected = undefined;
 
-  // ttokens processed by this scope on the current line
+  // tokens processed by this scope on the current line
   // automatically reset on each line start
   this.tokens = [];
 
