@@ -2,7 +2,7 @@
   "name": "dyslexer",
   "version": "0.2.1",
   "description": "Parser",
-  "main": "main.js",
+  "main": "lib/dyslexer.js",
   "scripts": {
     "test": "grunt test"
   },
