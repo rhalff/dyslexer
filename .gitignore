@@ -1,3 +1,7 @@
 ATTIC
 *.swp
+*.txt
 node_modules
+*.xmi
+*.puml
+scopes/
