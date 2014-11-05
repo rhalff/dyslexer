@@ -68,14 +68,14 @@ The DataScope will then be left and we are back at the rootScope.
 
 TODO: the api can be simplified much more.
 
-# Structure matching.
+### Structure matching.
 
 A structure is a set of tokens which a scope expects, a scope can define several structures
 which the dyslexer then can consider to be valid.
 
 This is useful for debugging and error checking.
 
-# Don'ts and concerns
+### Don'ts and concerns
 It's pretty easy to define too many scopes but also to few. One could make just one scope
 trying to handle each and every token encountered, it could very well be that for some DSL's this is sufficient.
 Or define a one to one relation of Scope and Token. It depends on the DSL what would be the best set of scopes
