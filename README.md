@@ -1,9 +1,6 @@
 dyslexer
 ========
 
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rhalff/dyslexer/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
 Dyslexer is a simple lexer to be able to parse custom DSL's
 
 The lexer makes use of scopes, by itself dyslexer will just try to read each and every character, but will not understand any of it.
@@ -13,7 +10,8 @@ Dyslexer will start to act ones it recognizes a character within it's current sc
 The default scope is the root scope.
 
 ### No Scope
-```
+
+```coffeescript
   'data' -> IN MyProcess(some/component) OUT -> X OtherProcess)
 ```
 
@@ -22,9 +20,11 @@ Input will just be the output, the dyslexer did not interpret anything
 
 ### Root Scope
 
+```coffeescript
 +-----------------------------------------------------------------+
 +  'data' -> IN MyProcess(some/component) OUT -> X OtherProcess)  +
 +-----------------------------------------------------------------+
+```
 
 The rootscope is mainly there to delegate to other scopes.
 It will make use of it's matchers to do so.
@@ -34,14 +34,16 @@ Is encountered, in this case `'`.
 The 'data' part indicates data input for this particular DSL. So logically
 we have recognized and will define a data scope.
 
+```coffeescript
 +----------------------------------------------------------------------+
 + +-----------+                                                        +
-* | DataScope +                                                        +
++ | DataScope +                                                        +
 + |           +                                                        +
 + |  'data'   + -> IN MyProcess(some/component) OUT -> X OtherProcess) +
 + +-----------+                                                        +
-*                                                                      +
++                                                                      +
 +----------------------------------------------------------------------+
+```
 
 So then we have learned the rootscope about data scope and isolated datascope,
 which then can be re-used, might we have to jump to data scope from other scopes.
@@ -53,14 +55,16 @@ The job of each scope is to detect tokens and present them to the dyslexer.
 
 The DataScope will then be left and we are back at the rootScope.
 
+```coffeescript
 +----------------------------------------------------------------------+
 + +-----------+                                                        +
-* | DataScope +                                                        +
++ | DataScope +                                                        +
 + |           +                                                        +
 + |  'data'   + -> IN MyProcess(some/component) OUT -> X OtherProcess) +
 + +-----------+                                                        +
-*                                                                      +
++                                                                      +
 +----------------------------------------------------------------------+
+```
 
 TODO: the api can be simplified much more.
 
