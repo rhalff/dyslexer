@@ -1,42 +1,105 @@
-
 /**
- * Require the given path.
+ * Require the module at `name`.
  *
- * @param {String} path
+ * @param {String} name
  * @return {Object} exports
  * @api public
  */
 
-function require(path, parent, orig) {
-  var resolved = require.resolve(path);
+function require(name) {
+  var module = require.modules[name];
+  if (!module) throw new Error('failed to require "' + name + '"');
 
-  // lookup failed
-  if (null == resolved) {
-    orig = orig || path;
-    parent = parent || 'root';
-    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
-    err.path = orig;
-    err.parent = parent;
-    err.require = true;
-    throw err;
-  }
-
-  var module = require.modules[resolved];
-
-  // perform real require()
-  // by invoking the module's
-  // registered function
-  if (!module._resolving && !module.exports) {
-    var mod = {};
-    mod.exports = {};
-    mod.client = mod.component = true;
-    module._resolving = true;
-    module.call(this, mod.exports, require.relative(resolved), mod);
-    delete module._resolving;
-    module.exports = mod.exports;
+  if (!('exports' in module) && typeof module.definition === 'function') {
+    module.client = module.component = true;
+    module.definition.call(this, module.exports = {}, module);
+    delete module.definition;
   }
 
   return module.exports;
+}
+
+/**
+ * Meta info, accessible in the global scope unless you use AMD option.
+ */
+
+require.loader = 'component';
+
+/**
+ * Internal helper object, contains a sorting function for semantiv versioning
+ */
+require.helper = {};
+require.helper.semVerSort = function(a, b) {
+  var aArray = a.version.split('.');
+  var bArray = b.version.split('.');
+  for (var i=0; i<aArray.length; ++i) {
+    var aInt = parseInt(aArray[i], 10);
+    var bInt = parseInt(bArray[i], 10);
+    if (aInt === bInt) {
+      var aLex = aArray[i].substr((""+aInt).length);
+      var bLex = bArray[i].substr((""+bInt).length);
+      if (aLex === '' && bLex !== '') return 1;
+      if (aLex !== '' && bLex === '') return -1;
+      if (aLex !== '' && bLex !== '') return aLex > bLex ? 1 : -1;
+      continue;
+    } else if (aInt > bInt) {
+      return 1;
+    } else {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Find and require a module which name starts with the provided name.
+ * If multiple modules exists, the highest semver is used. 
+ * This function can only be used for remote dependencies.
+
+ * @param {String} name - module name: `user~repo`
+ * @param {Boolean} returnPath - returns the canonical require path if true, 
+ *                               otherwise it returns the epxorted module
+ */
+require.latest = function (name, returnPath) {
+  function showError(name) {
+    throw new Error('failed to find latest module of "' + name + '"');
+  }
+  // only remotes with semvers, ignore local files conataining a '/'
+  var versionRegexp = /(.*)~(.*)@v?(\d+\.\d+\.\d+[^\/]*)$/;
+  var remoteRegexp = /(.*)~(.*)/;
+  if (!remoteRegexp.test(name)) showError(name);
+  var moduleNames = Object.keys(require.modules);
+  var semVerCandidates = [];
+  var otherCandidates = []; // for instance: name of the git branch
+  for (var i=0; i<moduleNames.length; i++) {
+    var moduleName = moduleNames[i];
+    if (new RegExp(name + '@').test(moduleName)) {
+        var version = moduleName.substr(name.length+1);
+        var semVerMatch = versionRegexp.exec(moduleName);
+        if (semVerMatch != null) {
+          semVerCandidates.push({version: version, name: moduleName});
+        } else {
+          otherCandidates.push({version: version, name: moduleName});
+        } 
+    }
+  }
+  if (semVerCandidates.concat(otherCandidates).length === 0) {
+    showError(name);
+  }
+  if (semVerCandidates.length > 0) {
+    var module = semVerCandidates.sort(require.helper.semVerSort).pop().name;
+    if (returnPath === true) {
+      return module;
+    }
+    return require(module);
+  }
+  // if the build contains more than one branch of the same module
+  // you should not use this funciton
+  var module = otherCandidates.pop().name;
+  if (returnPath === true) {
+    return module;
+  }
+  return require(module);
 }
 
 /**
@@ -46,170 +109,46 @@ function require(path, parent, orig) {
 require.modules = {};
 
 /**
- * Registered aliases.
- */
-
-require.aliases = {};
-
-/**
- * Resolve `path`.
+ * Register module at `name` with callback `definition`.
  *
- * Lookup:
- *
- *   - PATH/index.js
- *   - PATH.js
- *   - PATH
- *
- * @param {String} path
- * @return {String} path or null
- * @api private
- */
-
-require.resolve = function(path) {
-  if (path.charAt(0) === '/') path = path.slice(1);
-
-  var paths = [
-    path,
-    path + '.js',
-    path + '.json',
-    path + '/index.js',
-    path + '/index.json'
-  ];
-
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
-  }
-};
-
-/**
- * Normalize `path` relative to the current path.
- *
- * @param {String} curr
- * @param {String} path
- * @return {String}
- * @api private
- */
-
-require.normalize = function(curr, path) {
-  var segs = [];
-
-  if ('.' != path.charAt(0)) return path;
-
-  curr = curr.split('/');
-  path = path.split('/');
-
-  for (var i = 0; i < path.length; ++i) {
-    if ('..' == path[i]) {
-      curr.pop();
-    } else if ('.' != path[i] && '' != path[i]) {
-      segs.push(path[i]);
-    }
-  }
-
-  return curr.concat(segs).join('/');
-};
-
-/**
- * Register module at `path` with callback `definition`.
- *
- * @param {String} path
+ * @param {String} name
  * @param {Function} definition
  * @api private
  */
 
-require.register = function(path, definition) {
-  require.modules[path] = definition;
+require.register = function (name, definition) {
+  require.modules[name] = {
+    definition: definition
+  };
 };
 
 /**
- * Alias a module definition.
+ * Define a module's exports immediately with `exports`.
  *
- * @param {String} from
- * @param {String} to
+ * @param {String} name
+ * @param {Generic} exports
  * @api private
  */
 
-require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
-    throw new Error('Failed to alias "' + from + '", it does not exist');
-  }
-  require.aliases[to] = from;
-};
-
-/**
- * Return a require function relative to the `parent` path.
- *
- * @param {String} parent
- * @return {Function}
- * @api private
- */
-
-require.relative = function(parent) {
-  var p = require.normalize(parent, '..');
-
-  /**
-   * lastIndexOf helper.
-   */
-
-  function lastIndexOf(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-      if (arr[i] === obj) return i;
-    }
-    return -1;
-  }
-
-  /**
-   * The relative require() itself.
-   */
-
-  function localRequire(path) {
-    var resolved = localRequire.resolve(path);
-    return require(resolved, parent, path);
-  }
-
-  /**
-   * Resolve relative to the parent.
-   */
-
-  localRequire.resolve = function(path) {
-    var c = path.charAt(0);
-    if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(p, path);
-
-    // resolve deps by returning
-    // the dep in the nearest "deps"
-    // directory
-    var segs = parent.split('/');
-    var i = lastIndexOf(segs, 'deps') + 1;
-    if (!i) i = 0;
-    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-    return path;
+require.define = function (name, exports) {
+  require.modules[name] = {
+    exports: exports
   };
-
-  /**
-   * Check if module is defined at `path`.
-   */
-
-  localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
-  };
-
-  return localRequire;
 };
-require.register("dyslexer/lib/dyslexer.js", function(exports, require, module){
+require.register("dyslexer", function (exports, module) {
 'use strict';
 
 var inherit = require('util').inherits,
-  Scope = require('./scope'),
+  Scope = require('dyslexer/lib/scope.js'),
   EventEmitter = require('events').EventEmitter;
 
 /**
  *
- * The DysLexer keeps some states, which are actually pretty generic.
+ * DysLexer
  *
+ *
+ * @constructor
+ * @param {object} rootScope - The root scope
  */
 function DysLexer(rootScope) {
 
@@ -224,6 +163,8 @@ function DysLexer(rootScope) {
   this.eol = ['\n','\r', ','];
 
   this.scopeChar = 0;
+
+  this.lineNumber = 0;
 
   // default token endings
   // a scope can overwrite this temporarily
@@ -268,6 +209,11 @@ inherit(DysLexer, EventEmitter);
 
 DysLexer.Scope = Scope;
 
+/**
+ *
+ * Reset
+ *
+ */
 DysLexer.prototype.reset = function() {
 
   this.chars = {};
@@ -292,23 +238,45 @@ DysLexer.prototype.reset = function() {
   // line is rebuild for logging
   this.line = '';
 
+  this.lineNumber = 0;
+
   this.scope = this.rootScope;
 
   this.track = [this.scope];
 
 };
 
+/**
+ *
+ * Add Scope
+ *
+ * Adds a new scope to the lexer.
+ *
+ * @param {string} scope
+ */
 DysLexer.prototype.addScope = function(scope) {
 
   this.level[scope.name] = new scope(this);
 
 };
 
-// goes to last scope
+/**
+ *
+ * Goes back to the scope we entered from.
+ *
+ * @param {string} c - Current character
+ */
 DysLexer.prototype.back = function(c) {
   this.toScope(this.track.pop(), c);
 };
 
+/**
+ *
+ * Switch to another scope
+ *
+ * @param {string} scope - Scope to switch to
+ * @param {string} c     - Current character
+ */
 DysLexer.prototype.toScope = function(scope, c) {
 
   // Still useful in debug mode
@@ -321,34 +289,45 @@ DysLexer.prototype.toScope = function(scope, c) {
   //this.lastScope = this.scope;
   this.track.push(this.scope);
 
+  if (!this.level[scope]) {
+    throw Error('Unknown scope: ' + scope);
+  }
+
   // Not used...
   this.level[scope].setParent(
     this.level[this.scope]
   );
 
-  // check structure of the scope we left
+  /** check structure of the scope we left */
   this.checkStructure(this.scope);
 
-  // register the current scope
+  /** register the current scope */
   this.scope = scope;
 
-  // inform what char did the scope
+  /** inform what char did the scope */
   this.scoper = c;
 
-  // char at which this was scoped
+  /** char at which this was scoped */
   this.scopeChar = this.current;
 
-  // reset token list
+  /** reset token list */
   this.level[this.scope].tokens = [];
 
-  // notify new scope we have entered.
+  /** notify new scope we have entered. */
   this.level[this.scope].onEnter();
 };
 
+/**
+ *
+ *
+ *
+ */
 DysLexer.prototype.next = function() {
 
+  /** take the current character */
   var c = this.chars[this.current];
 
+  /** rebuild the line for debug purposes */
   this.line += c;
 
   // debug
@@ -372,7 +351,7 @@ DysLexer.prototype.next = function() {
   // the character will be re-considered by the other scope
   // that's the code following below.
 
-  // it the scope has set it's own tokenEndings..
+  /** if the scope has set it's own tokenEndings.. */
   if(this.level[this.scope].tokenEnding !== undefined) {
 
     if(!this.tokenStart) this.tokenStart = this.current;
@@ -401,12 +380,12 @@ DysLexer.prototype.next = function() {
     this.tokenEnding.indexOf(c) === -1 &&
     this.eol.indexOf(c) === -1) {
 
-    // default behaviour, build the token
+    /** default behaviour, build the token */
     if(!this.tokenStart) this.tokenStart = this.current;
     this.token += c;
 
   } else if(
-     // don't act if the scope took control
+     /** don't act if the scope took control */
      this.level[this.scope].tokenEnding === undefined &&
      this.tokenEnding.indexOf(c) >= 0) {
 
@@ -431,12 +410,14 @@ DysLexer.prototype.next = function() {
 
         // do not emit lines without tokens. (empty ones)
         if(this.tokens.length) {
-          this.emit('lineTokens', this.tokens, this.line);
+          this.emit('lineTokens', this.tokens, this.line, this.lineNumber);
 
           if(this.sync) {
             // array of tokens per line
             this._tokens.push(this.tokens);
           }
+
+          this.lineNumber++;
 
         }
 
@@ -462,7 +443,7 @@ DysLexer.prototype.fireToken = function() {
       throw new Error('tokensExpected is not set for ' + this.scope);
     }
 
-    // ok how to solve that chaining problem.
+    /** validate expected token count */
     if(this.level[this.scope].tokensExpected <
        this.level[this.scope].tokens.length) {
       throw new Error([
@@ -478,15 +459,18 @@ DysLexer.prototype.fireToken = function() {
       ].join(' '));
     }
 
+    /** remember the current scope */
     var realScope = this.scope;
 
-    // Really switch this scope to root scope
+    /** switch the current scope to root scope */
     this.scope = this.rootScope;
 
-    // If the scope has set it's own token ending
-    // do not run the rootScope 'scanner' if that's the case
+    /**
+     * If the scope has set it's own token ending
+     * do not run the rootScope 'scanner'
+     */
     if(this.level[realScope].tokenEnding !== undefined ||
-       // runs only if the above didn't match, which is important.
+       /** runs only if the above didn't match, which is important. */
        !this.level[this.rootScope].onToken(this.token)) {
 
       this.scope = realScope;
@@ -496,10 +480,10 @@ DysLexer.prototype.fireToken = function() {
 
     }
 
-    // reset token
+    /** reset token */
     this.token = '';
 
-    // reset token start
+    /** reset token start */
     this.tokenStart = undefined;
 
   }
@@ -526,7 +510,7 @@ DysLexer.prototype.isEscaped = function() {
 // This way we can detect unhandled tokens.
 DysLexer.prototype.present = function(name, data) {
 
-  // maybe force validation to be present.
+  /** validate the token */
   if(this.level[this.scope].validate) {
     var reg = this.level[this.scope].validate[name];
     if(typeof reg === 'string') reg = new RegExp(reg); // ...
@@ -543,8 +527,10 @@ DysLexer.prototype.present = function(name, data) {
     }
   }
 
-  // Note: this relies on the scopes emitting the tokens back.
-  // It does not contain each and every token emitted by this matcher.
+  /**
+   * Note: this relies on the scopes emitting the tokens back.
+   * It does not contain each and every token emitted by this matcher.
+   */
   this.lastToken = {
     name: name,
     scope: this.scope,
@@ -554,15 +540,15 @@ DysLexer.prototype.present = function(name, data) {
     end: this.current
   };
 
-  // remember token
+  /** remember token */
   this.tokens.push(this.lastToken);
 
   this.emit('token', this.lastToken);
 
-  // push token for this scope
+  /** push token for this scope */
   this.level[this.scope].tokens.push(this.lastToken);
 
-  // if we've reached the token count, go back a level (or to root maybe)
+  /** if we've reached the token count, go back a level (or to root maybe) */
   if(this.level[this.scope].tokensExpected ===
     this.level[this.scope].tokens.length) {
 
@@ -609,14 +595,13 @@ DysLexer.prototype.start = function(str, sync) {
     throw new Error('Initial Root Scope required');
   }
 
-  // notify all, we've started
+  /** notify all scopes we've started */
   for(scope in this.level) {
     if(this.level.hasOwnProperty(scope)) {
       this.level[scope].onLineStart();
     }
   }
 
-  // TODO: this way next makes no sense... :-)
   for(i = 0; i < this.chars.length; i++) {
     this.next();
   }
@@ -634,9 +619,11 @@ DysLexer.prototype.readChunk = function(str) {
 
 };
 
-// TODO: I want also to check partial structure.
-// per token length, now only the end result is checked.
-// not during token building for one scope.
+/**
+ *
+ * Checks whether the scope returns with an expected structure.
+ *
+ */
 DysLexer.prototype.checkStructure = function(scope) {
 
   var s = this.level[scope];
@@ -644,8 +631,6 @@ DysLexer.prototype.checkStructure = function(scope) {
   // output to structure
   var tokens = s.tokens.map(function(t) { return t.name; });
 
-  // nice, left hand is never checked..
-  // because it's always empty, still true?
   if(tokens.length) {
 
     // Check if it matches any of the structures.
@@ -684,7 +669,8 @@ DysLexer.prototype.checkStructure = function(scope) {
 module.exports = DysLexer;
 
 });
-require.register("dyslexer/lib/scope.js", function(exports, require, module){
+
+require.register("dyslexer/lib/scope.js", function (exports, module) {
 'use strict';
 
 function Scope(lexer) {
@@ -693,24 +679,30 @@ function Scope(lexer) {
 
   // default token endings
   // a scope can overwrite this.
-  //this.tokenEnding = [];
   // [] now means the scope doesn't have any token endings.
   // it will handle it by itself.
   this.tokenEnding = undefined;
 
-  // If this is set, the parser will throw an error
-  // if there are more tokens, within the current scope.
+  /**
+   * If this is set the parser will throw an error
+   * when there are more tokens within the current scope.
+   */
   this.tokensExpected = undefined;
 
-  // tokens processed by this scope on the current line
-  // automatically reset on each line start
+  /**
+   * tokens processed by this scope on the current line
+   * automatically reset on each line start
+   */
   this.tokens = [];
 
-  // check for escaped token endings
+  /** check for escaped token endings */
   this.escape = false;
 
-  // basic structure checking
-  // if empty no structure checking is done.
+  /**
+   * Basic structure checking
+   * if empty no structure checking is done.
+   * If it is set the tokens _must_ match one of structures.
+   */
   this.structure = [];
 
   // this could be made generic for switchers.
@@ -722,11 +714,32 @@ function Scope(lexer) {
 
 }
 
+/**
+* executed during each line end
+* regardless whether this scope is active.
+*/
 Scope.prototype.onLineEnd   = function() { };
+
+/**
+* executed during each line start 
+* regardless whether this scope is active.
+*/
 Scope.prototype.onLineStart = function() { };
+
+/**
+* Executes each time a scope is entered
+*/
 Scope.prototype.onEnter     = function() { };
+
+/**
+* Executed once during initialization
+*/
 Scope.prototype.setup       = function() { };
 
+/**
+* Get the parent scope of this scope
+* the scope we entered from
+*/
 Scope.prototype.parent = function() {
 
   return this._parent;
@@ -737,6 +750,10 @@ Scope.prototype.setParent = function(parent) {
   this._parent = parent;
 };
 
+/**
+* For convenience it's possible to create an alias
+* For a scanner function within the scope.
+*/
 Scope.prototype.loadRules = function() {
 
   var alias;
@@ -756,4 +773,5 @@ Scope.prototype.loadRules = function() {
 module.exports = Scope;
 
 });
-require.alias("dyslexer/lib/dyslexer.js", "dyslexer/index.js");
+
+require("dyslexer");
