@@ -5,7 +5,15 @@
 import Dyslexer from '../src/dyslexer'
 import Scope from '../src/scope'
 
-class RootScope extends Scope {}
+class RootScope extends Scope {
+  constructor (lexer) {
+    super(lexer)
+    this.tokensExpected = Infinity;
+  }
+  onToken (token) {
+    this.lexer.present('MY_TOKEN', token)
+  }
+}
 class Scope1 extends Scope {}
 class Scope2 extends Scope {}
 class Scope3 extends Scope {
@@ -148,6 +156,23 @@ describe('Dyslexer', () => {
         lexer.present('MY_TOKEN', 'my_value')
         expect(lexer.scope).to.eql('RootScope')
       })
+    })
+  })
+  describe('Lexing', () => {
+    it('Should detect token', (done) => {
+      const str = `MY_TOKEN`
+      lexer.once('token', (token) => {
+        expect(token).to.eql({
+          name: 'MY_TOKEN',
+          scope: 'RootScope',
+          value: 'MY_TOKEN',
+          scopeChar: undefined, // Rootscope nothing scoped yet
+          start: 1,
+          end: 'MY_TOKEN'.length
+        })
+        done()
+      })
+      lexer.start(str)
     })
   })
 })
