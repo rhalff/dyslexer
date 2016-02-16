@@ -58,6 +58,13 @@ class Scope {
   onEnter () {}
 
   /**
+   * Executes each time a token is found
+   */
+  onToken () {
+    throw Error('onToken() method not implemented')
+  }
+
+  /**
    * Executed once during initialization
    */
   setup () {}
