@@ -110,7 +110,8 @@ export default class DysLexer extends EventEmitter {
    * @param {string} scope
    */
   addScope (Scope) {
-    return this.level[Scope.name] = new Scope(this)
+    this.level[Scope.name] = new Scope(this)
+    return this.level[Scope.name]
   }
 
   /**

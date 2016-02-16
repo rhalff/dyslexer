@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* global expect */
-import fs from 'fs'
-import path from 'path'
+// import fs from 'fs'
+// import path from 'path'
 import Dyslexer from '../src/dyslexer'
 import Scope from '../src/scope'
 
@@ -9,7 +9,7 @@ class RootScope extends Scope {}
 class Scope1 extends Scope {}
 class Scope2 extends Scope {}
 class Scope3 extends Scope {
-  constructor() {
+  constructor () {
     super()
     this.tokensExpected = 1
   }
@@ -68,15 +68,15 @@ describe('Dyslexer', () => {
     })
     describe('back()', () => {
       it('Lexer can switch back to previous scope', () => {
-        const scope1 = lexer.addScope(Scope1)
+        lexer.addScope(Scope1)
         lexer.toScope('Scope1', 'a')
         lexer.back()
         expect(lexer.scope).to.equal(RootScope.name)
       })
       it('Lexer can switch back to previous scope (many)', () => {
-        const scope1 = lexer.addScope(Scope1)
-        const scope2 = lexer.addScope(Scope2)
-        const scope3 = lexer.addScope(Scope3)
+        lexer.addScope(Scope1)
+        lexer.addScope(Scope2)
+        lexer.addScope(Scope3)
         lexer.toScope('Scope1', 'a')
         lexer.toScope('Scope2', 'a')
         lexer.toScope('Scope3', 'a')
