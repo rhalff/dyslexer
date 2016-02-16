@@ -2,6 +2,7 @@
 
 import Scope from './scope'
 import compare from './compare'
+import EventEmitter from 'events'
 
 /**
  *
@@ -10,8 +11,9 @@ import compare from './compare'
  * @constructor
  * @param {object} rootScope - The root scope
  */
-class DysLexer {
+export default class DysLexer extends EventEmitter {
   constructor (rootScope) {
+    super()
     this.chars = []
     this.current = 0
 
@@ -61,7 +63,7 @@ class DysLexer {
     // keep track of where we are,
     // with possibility to go back
     // bit wild but works.
-    this.track = [this.scope]
+    this.track = []
   }
 
   /**
@@ -96,7 +98,7 @@ class DysLexer {
 
     this.scope = this.rootScope
 
-    this.track = [this.scope]
+    this.track = []
   }
 
   /**
@@ -108,7 +110,7 @@ class DysLexer {
    * @param {string} scope
    */
   addScope (Scope) {
-    this.level[Scope.name] = new Scope(this)
+    return this.level[Scope.name] = new Scope(this)
   }
 
   /**
@@ -118,7 +120,11 @@ class DysLexer {
    * @param {string} c - Current character
    */
   back (c) {
-    this.toScope(this.track.pop(), c)
+    if (this.track.length) {
+      this.toScope(this.track.pop(), c, false)
+    } else {
+      throw Error('Already at rootScope cannot go back')
+    }
   }
 
   /**
@@ -127,8 +133,9 @@ class DysLexer {
    *
    * @param {string} scope - Scope to switch to
    * @param {string} c     - Current character
+   * @param {string} track - Whether to track this scope switch
    */
-  toScope (scope, c) {
+  toScope (scope, c, track = true) {
     // Still useful in debug mode
     // console.log('------ ' + scope + '------')
     this.emit('scopeSwitch', {
@@ -136,8 +143,9 @@ class DysLexer {
       to: scope
     })
 
-    // this.lastScope = this.scope
-    this.track.push(this.scope)
+    if (track) {
+      this.track.push(this.scope)
+    }
 
     if (!this.level[scope]) {
       throw Error('Unknown scope: ' + scope)
@@ -422,6 +430,9 @@ class DysLexer {
    *
    */
   checkStructure (scope) {
+    if (!this.level.hasOwnProperty(scope)) {
+      throw Error(`No such scope: ${scope}`)
+    }
     var s = this.level[scope]
 
     // output to structure
