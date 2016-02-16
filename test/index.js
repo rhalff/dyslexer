@@ -8,7 +8,12 @@ import Scope from '../src/scope'
 class RootScope extends Scope {}
 class Scope1 extends Scope {}
 class Scope2 extends Scope {}
-class Scope3 extends Scope {}
+class Scope3 extends Scope {
+  constructor() {
+    super()
+    this.tokensExpected = 1
+  }
+}
 /*
 const contents = fs.readFileSync(
   path.resolve(__dirname, 'fixtures', 'barline.mod')
@@ -16,8 +21,10 @@ const contents = fs.readFileSync(
 */
 describe('Dyslexer', () => {
   let lexer
+  let rootScope
   beforeEach(() => {
     lexer = new Dyslexer('RootScope')
+    rootScope = lexer.addScope(RootScope)
   })
   describe('Default State', () => {
     it('has a rootScope', () => {
@@ -33,14 +40,8 @@ describe('Dyslexer', () => {
       expect(lexer.chars.length).to.equal(0)
     })
   })
-  describe('addScope()', () => {
-    it('Should be able to add Scope', () => {
-      lexer.addScope(Scope1)
-    })
-  })
   describe('toScope()', () => {
     it('Can switch to different Scope', () => {
-      lexer.addScope(RootScope)
       lexer.addScope(Scope1)
       lexer.toScope('Scope1', 'a')
     })
@@ -61,21 +62,18 @@ describe('Dyslexer', () => {
       expect(lexer.track[0]).to.eql('RootScope')
     })
     it('New scope has access to parent scope', () => {
-      const rootScope = lexer.addScope(RootScope)
       const scope1 = lexer.addScope(Scope1)
       lexer.toScope('Scope1', 'a')
       expect(scope1.parent()).to.equal(rootScope)
     })
     describe('back()', () => {
       it('Lexer can switch back to previous scope', () => {
-        const rootScope = lexer.addScope(RootScope)
         const scope1 = lexer.addScope(Scope1)
         lexer.toScope('Scope1', 'a')
         lexer.back()
         expect(lexer.scope).to.equal(RootScope.name)
       })
       it('Lexer can switch back to previous scope (many)', () => {
-        const rootScope = lexer.addScope(RootScope)
         const scope1 = lexer.addScope(Scope1)
         const scope2 = lexer.addScope(Scope2)
         const scope3 = lexer.addScope(Scope3)
@@ -104,6 +102,51 @@ describe('Dyslexer', () => {
         lexer.back()
         expect(lexer.scope).to.equal(RootScope.name)
         expect(lexer.back.bind(lexer)).to.throw(/cannot go back/)
+      })
+    })
+  })
+  describe('present()', () => {
+    const expected = {
+      name: 'MY_TOKEN',
+      scope: 'RootScope',
+      scopeChar: undefined,
+      start: 0,
+      end: 0,
+      value: 'my_value'
+    }
+    it('Should be able to present a token', () => {
+      lexer.present('MY_TOKEN', true)
+    })
+    it('Should remember lastToken', () => {
+      lexer.present('MY_TOKEN', 'my_value')
+      expect(lexer.lastToken).to.eql(expected)
+    })
+    it('Should have tracked the token', () => {
+      lexer.present('MY_TOKEN', 'my_value')
+      expect(lexer.tokens).to.eql([expected])
+    })
+    it('Should emit a token event', (done) => {
+      lexer.once('token', (token) => {
+        expect(token).to.eql(expected)
+        done()
+      })
+      lexer.present('MY_TOKEN', 'my_value')
+    })
+    describe('The current scope', () => {
+      it('Should have tracked the token', () => {
+        lexer.present('MY_TOKEN', 'my_value')
+        expect(lexer.level[lexer.scope].tokens.length).to.eql(1)
+        expect(lexer.level[lexer.scope].tokens).to.eql([expected])
+      })
+    })
+    describe('TokensExpected', () => {
+      it('Jumps back if scope has reached tokensExpected', () => {
+        lexer.addScope(Scope3)
+        expect(lexer.scope).to.eql('RootScope')
+        lexer.toScope('Scope3')
+        expect(lexer.scope).to.eql('Scope3')
+        lexer.present('MY_TOKEN', 'my_value')
+        expect(lexer.scope).to.eql('RootScope')
       })
     })
   })

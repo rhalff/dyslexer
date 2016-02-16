@@ -384,7 +384,8 @@ export default class DysLexer extends EventEmitter {
     if (this.level[this.scope].tokensExpected ===
       this.level[this.scope].tokens.length) {
       // ok this works but is a bit ugly...
-      this.toScope(this.rootScope)
+      // this.toScope(this.rootScope)
+      this.back()
     }
   }
 
