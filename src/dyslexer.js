@@ -24,7 +24,7 @@ export default class DysLexer extends EventEmitter {
     // not as default overhere
     this.eol = ['\n', '\r', ',']
 
-    this.scopeChar = 0
+    this.scopeChar = undefined
 
     this.lineNumber = 0
 
@@ -75,7 +75,7 @@ export default class DysLexer extends EventEmitter {
     this.chars = []
     this.current = 0
 
-    this.scopeChar = 0
+    this.scopeChar = undefined
 
     // Tokens
     this.lastToken = undefined
