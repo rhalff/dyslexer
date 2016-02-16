@@ -6,4 +6,5 @@ lib
 node_modules
 *.xmi
 *.puml
+*.log
 scopes/
