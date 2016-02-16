@@ -1,4 +1,5 @@
 ATTIC
+.idea/
 *.swp
 *.txt
 node_modules

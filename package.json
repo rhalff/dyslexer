@@ -4,7 +4,8 @@
   "description": "Parser",
   "main": "lib/dyslexer.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "lint": "standard lib/*.js *.js"
   },
   "repository": {
     "type": "git",
@@ -26,5 +27,8 @@
     "grunt-shell": "~0.6.1",
     "grunt-contrib-jshint": "0.x.x",
     "grunt-release": "~0.6.0"
+  },
+  "dependencies": {
+    "standard": "^6.0.5"
   }
 }
