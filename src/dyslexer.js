@@ -281,7 +281,7 @@ export default class DysLexer extends EventEmitter {
 
   fireToken () {
     if (this.token) {
-      if (typeof this.level[this.scope].tokensExpected === 'undefined') {
+      if (this.level[this.scope].tokensExpected === undefined) {
         throw new Error('tokensExpected is not set for ' + this.scope)
       }
 
