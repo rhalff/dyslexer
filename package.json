@@ -9,6 +9,7 @@
     "lint": "standard src/**/*.js test/**/*.js *.js",
     "format": "standard --format src/**/*.js test/**/*.js *.js",
     "preinstall": "npm -s build",
+    "prepublish": "npm -s build",
     "build": "babel src --out-dir lib"
   },
   "repository": {
