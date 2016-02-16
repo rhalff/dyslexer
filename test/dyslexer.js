@@ -8,7 +8,7 @@ import Scope from '../src/scope'
 class RootScope extends Scope {
   constructor (lexer) {
     super(lexer)
-    this.tokensExpected = Infinity;
+    this.tokensExpected = Infinity
   }
   onToken (token) {
     this.lexer.present('MY_TOKEN', token)
@@ -160,7 +160,7 @@ describe('Dyslexer', () => {
   })
   describe('Lexing', () => {
     it('Should detect token', (done) => {
-      const str = `MY_TOKEN`
+      const str = 'MY_TOKEN'
       lexer.once('token', (token) => {
         expect(token).to.eql({
           name: 'MY_TOKEN',

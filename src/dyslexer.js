@@ -433,7 +433,7 @@ export default class DysLexer extends EventEmitter {
     const s = this.level[scope]
 
     // output to structure
-    const tokens = s.tokens.map(t => t.name)
+    const tokens = s.tokens.map((t) => t.name)
 
     if (tokens.length) {
       // Check if it matches any of the structures.
