@@ -183,7 +183,7 @@ export default class DysLexer extends EventEmitter {
    */
   next () {
     /** take the current character */
-    var c = this.chars.charAt(this.current)
+    const c = this.chars.charAt(this.current)
 
     /** rebuild the line for debug purposes */
     this.line += c
@@ -250,7 +250,7 @@ export default class DysLexer extends EventEmitter {
       // fire last token
       this.fireToken()
 
-      for (var s in this.level) {
+      for (const s in this.level) {
         if (this.level.hasOwnProperty(s)) {
           this.level[s].onLineEnd()
 
@@ -302,7 +302,7 @@ export default class DysLexer extends EventEmitter {
       }
 
       /** remember the current scope */
-      var realScope = this.scope
+      const realScope = this.scope
 
       /** switch the current scope to root scope */
       this.scope = this.rootScope
@@ -345,7 +345,7 @@ export default class DysLexer extends EventEmitter {
   present (name, data) {
     /** validate the token */
     if (this.level[this.scope].validate) {
-      var reg = this.level[this.scope].validate[name]
+      let reg = this.level[this.scope].validate[name]
       if (typeof reg === 'string') reg = new RegExp(reg) // ...
       if (reg && !reg.test(data)) {
         throw new Error([
@@ -391,28 +391,23 @@ export default class DysLexer extends EventEmitter {
   }
 
   start (str, sync) {
-    var i, scope
-
-    // TODO: temp fix
-    str = str + '\n'
-
     // will remember all _tokens
     this.sync = sync
 
-    this.chars = str
+    this.chars = str + '\n' // TODO: temp fix
 
     if (!this.rootScope) {
       throw new Error('Initial Root Scope required')
     }
 
     /** notify all scopes we've started */
-    for (scope in this.level) {
+    for (const scope in this.level) {
       if (this.level.hasOwnProperty(scope)) {
         this.level[scope].onLineStart()
       }
     }
 
-    for (i = 0; i < this.chars.length; i++) {
+    for (let i = 0; i < this.chars.length; i++) {
       this.next()
     }
 
@@ -435,18 +430,16 @@ export default class DysLexer extends EventEmitter {
     if (!this.level.hasOwnProperty(scope)) {
       throw Error(`No such scope: ${scope}`)
     }
-    var s = this.level[scope]
+    const s = this.level[scope]
 
     // output to structure
-    var tokens = s.tokens.map(function (t) {
-      return t.name
-    })
+    const tokens = s.tokens.map(t => t.name)
 
     if (tokens.length) {
       // Check if it matches any of the structures.
       if (s.structure.length) {
-        var match = false
-        for (var str in s.structure) {
+        let match = false
+        for (const str in s.structure) {
           if (compare(tokens, s.structure[str])) {
             match = true
             break
