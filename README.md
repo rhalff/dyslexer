@@ -1,4 +1,6 @@
-dyslexer
+[![Build Status](https://travis-ci.org/rhalff/dyslexer.png)](https://travis-ci.org/rhalff/dyslexer)
+
+Dyslexer
 ========
 
 Dyslexer is a simple lexer to be able to parse custom DSL's
