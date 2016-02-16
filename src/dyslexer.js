@@ -14,7 +14,7 @@ import EventEmitter from 'events'
 export default class DysLexer extends EventEmitter {
   constructor (rootScope) {
     super()
-    this.chars = []
+    this.chars = ''
     this.current = 0
 
     // not totally correct, ah well..
@@ -72,7 +72,7 @@ export default class DysLexer extends EventEmitter {
    *
    */
   reset () {
-    this.chars = []
+    this.chars = ''
     this.current = 0
 
     this.scopeChar = undefined
@@ -183,7 +183,7 @@ export default class DysLexer extends EventEmitter {
    */
   next () {
     /** take the current character */
-    var c = this.chars[this.current]
+    var c = this.chars.charAt(this.current)
 
     /** rebuild the line for debug purposes */
     this.line += c
@@ -330,7 +330,7 @@ export default class DysLexer extends EventEmitter {
   isEscaped () {
     // leave room to escape the choice.
     if (this.level[this.scope].escape) {
-      if (this.chars[this.current - 1] === '\\') {
+      if (this.chars.charAt(this.current - 1) === '\\') {
         return true
       }
     }
@@ -399,7 +399,7 @@ export default class DysLexer extends EventEmitter {
     // will remember all _tokens
     this.sync = sync
 
-    this.chars = str.split('')
+    this.chars = str
 
     if (!this.rootScope) {
       throw new Error('Initial Root Scope required')
