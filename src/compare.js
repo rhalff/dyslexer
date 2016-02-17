@@ -1,4 +1,4 @@
-export default function compare (arr1, arr2) {
+export function compare (arr1, arr2) {
   const l = arr1.length
   if (!arr2) return false
   if (arr1.length !== arr2.length) return false

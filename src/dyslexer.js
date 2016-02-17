@@ -1,7 +1,7 @@
 'use strict'
 
 import Scope from './scope'
-import compare from './compare'
+import {compare} from './compare'
 import EventEmitter from 'events'
 
 /**
