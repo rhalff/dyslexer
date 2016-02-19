@@ -34,9 +34,7 @@
     "mocha": "2.x.x",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
+    "standard": "^6.0.5",
     "standard-format": "^2.1.0"
-  },
-  "dependencies": {
-    "standard": "^6.0.5"
   }
 }
